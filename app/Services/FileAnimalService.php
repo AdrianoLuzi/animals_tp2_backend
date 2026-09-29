@@ -34,18 +34,18 @@ class FileAnimalService implements AnimalServiceInterface
         return $this->getAnimals();
     }
 
-    public function find(int|string $id)
+    public function find(string $id): ?array
     {
         $animals = $this->getAnimals();
         
         foreach ($animals as $animal) {
+            // Se usa == para que un ID numérico coincida con el string
             if ($animal['id'] == $id) {
                 return $animal;
             }
         }
         
-        // Lanza una excepción estándar si el ID no existe[cite: 3]
-        throw new Exception("El animal con ID {$id} no fue encontrado.");
+        throw new \Exception("El animal con ID {$id} no fue encontrado.");
     }
 
     public function create(array $data): array
@@ -60,6 +60,35 @@ class FileAnimalService implements AnimalServiceInterface
         $this->saveAnimals($animals);
         
         return $data;
+    }
+
+    public function update(string $id, array $data): ?array
+    {
+        $animals = $this->getAnimals();
+        $indexToUpdate = null;
+        
+        // Buscamos el índice del animal que coincide con el ID
+        foreach ($animals as $index => $animal) {
+            if ($animal['id'] == $id) {
+                $indexToUpdate = $index;
+                break;
+            }
+        }
+        
+        if ($indexToUpdate === null) {
+            // Arrojamos la excepción estándar si no existe
+            throw new \Exception("El animal con ID {$id} no fue encontrado.");
+        }
+        
+        // Actualizamos los datos y aseguramos mantener el ID intacto
+        $animals[$indexToUpdate] = array_merge($animals[$indexToUpdate], $data);
+        $animals[$indexToUpdate]['id'] = $id;
+        
+        // Persistimos el cambio en el disco
+        $this->saveAnimals($animals);
+        
+        // Retornamos el array del animal actualizado para cumplir con ?array
+        return $animals[$indexToUpdate];
     }
 
     public function delete(int|string $id): bool
